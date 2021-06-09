@@ -1,0 +1,21 @@
+Source: python3-saml
+Section: python
+Priority: optional
+Maintainer: Pexip AS <packaging@pexip.com>
+Build-Depends: debhelper-compat (= 12), dh-python,
+ python3-all,
+ python3-defusedxml,
+ python3-freezegun,
+ python3-isodate,
+ python3-lxml,
+ python3-setuptools,
+ python3-xmlsec
+Standards-Version: 4.3.0
+Homepage: https://github.com/onelogin/python-saml
+Rules-Requires-Root: no
+
+Package: python3-saml
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}
+Description: OneLogin's SAML Python Toolkit (Python 3)
+ This package installs the library for Python 3.

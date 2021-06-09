@@ -1,0 +1,5 @@
+python3-saml (1.10.1-1pexip1) pexip; urgency=medium
+
+  * Initial upload to PexOS.
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Wed, 09 Jun 2021 17:16:05 +0100
