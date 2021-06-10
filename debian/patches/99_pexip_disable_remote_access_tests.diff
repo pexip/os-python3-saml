@@ -1,0 +1,257 @@
+Remove tests which require network access and ping remote servers(!)
+
+
+--- a/tests/src/OneLogin/saml2_tests/idp_metadata_parser_test.py
++++ b/tests/src/OneLogin/saml2_tests/idp_metadata_parser_test.py
+@@ -43,50 +43,50 @@
+         f.close()
+         return content
+ 
+-    def testGetMetadata(self):
+-        """
+-        Tests the get_metadata method of the OneLogin_Saml2_IdPMetadataParser
+-        """
+-        with self.assertRaises(Exception):
+-            data = OneLogin_Saml2_IdPMetadataParser.get_metadata('http://google.es')
+-
+-        try:
+-            data = OneLogin_Saml2_IdPMetadataParser.get_metadata('https://idp.testshib.org/idp/shibboleth')
+-            self.assertTrue(data is not None and data is not {})
+-        except URLError:
+-            pass
+-
+-    def testParseRemote(self):
+-        """
+-        Tests the parse_remote method of the OneLogin_Saml2_IdPMetadataParser
+-        """
+-        with self.assertRaises(Exception):
+-            data = OneLogin_Saml2_IdPMetadataParser.parse_remote('http://google.es')
+-
+-        try:
+-            data = OneLogin_Saml2_IdPMetadataParser.parse_remote('https://idp.testshib.org/idp/shibboleth')
+-        except URLError:
+-            xml = self.file_contents(join(self.data_path, 'metadata', 'testshib-providers.xml'))
+-            data = OneLogin_Saml2_IdPMetadataParser.parse(xml)
+-
+-        self.assertTrue(data is not None and data is not {})
+-        expected_settings_json = """
+-        {
+-          "sp": {
+-            "NameIDFormat": "urn:mace:shibboleth:1.0:nameIdentifier"
+-          },
+-          "idp": {
+-            "entityId": "https://idp.testshib.org/idp/shibboleth",
+-            "x509cert": "MIIDAzCCAeugAwIBAgIVAPX0G6LuoXnKS0Muei006mVSBXbvMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNVBAMMEGlkcC50ZXN0c2hpYi5vcmcwHhcNMTYwODIzMjEyMDU0WhcNMzYwODIzMjEyMDU0WjAbMRkwFwYDVQQDDBBpZHAudGVzdHNoaWIub3JnMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg9C4J2DiRTEhJAWzPt1S3ryhm3M2P3hPpwJwvt2q948vdTUxhhvNMuc3M3S4WNh6JYBs53R+YmjqJAII4ShMGNEmlGnSVfHorex7IxikpuDPKV3SNf28mCAZbQrX+hWA+ann/uifVzqXktOjs6DdzdBnxoVhniXgC8WCJwKcx6JO/hHsH1rG/0DSDeZFpTTcZHj4S9MlLNUtt5JxRzV/MmmB3ObaX0CMqsSWUOQeE4nylSlp5RWHCnx70cs9kwz5WrflnbnzCeHU2sdbNotBEeTHot6a2cj/pXlRJIgPsrL/4VSicPZcGYMJMPoLTJ8mdy6mpR6nbCmP7dVbCIm/DQIDAQABoz4wPDAdBgNVHQ4EFgQUUfaDa2mPi24x09yWp1OFXmZ2GPswGwYDVR0RBBQwEoIQaWRwLnRlc3RzaGliLm9yZzANBgkqhkiG9w0BAQsFAAOCAQEASKKgqTxhqBzROZ1eVy++si+eTTUQZU4+8UywSKLia2RattaAPMAcXUjO+3cYOQXLVASdlJtt+8QPdRkfp8SiJemHPXC8BES83pogJPYEGJsKo19l4XFJHPnPy+Dsn3mlJyOfAa8RyWBS80u5lrvAcr2TJXt9fXgkYs7BOCigxtZoR8flceGRlAZ4p5FPPxQR6NDYb645jtOTMVr3zgfjP6Wh2dt+2p04LG7ENJn8/gEwtXVuXCsPoSCDx9Y0QmyXTJNdV1aB0AhORkWPlFYwp+zOyOIR+3m1+pqWFpn0eT/HrxpdKa74FA3R2kq4R7dXe4G0kUgXTdqXMLRKhDgdmA==",
+-            "singleSignOnService": {
+-              "url": "https://idp.testshib.org/idp/profile/SAML2/Redirect/SSO",
+-              "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+-            }
+-          }
+-        }
+-        """
+-        expected_settings = json.loads(expected_settings_json)
+-        self.assertEqual(expected_settings, data)
++    #def testGetMetadata(self):
++    #    """
++    #    Tests the get_metadata method of the OneLogin_Saml2_IdPMetadataParser
++    #    """
++    #    with self.assertRaises(Exception):
++    #        data = OneLogin_Saml2_IdPMetadataParser.get_metadata('http://google.es')
++    #
++    #    try:
++    #        data = OneLogin_Saml2_IdPMetadataParser.get_metadata('https://idp.testshib.org/idp/shibboleth')
++    #        self.assertTrue(data is not None and data is not {})
++    #    except URLError:
++    #        pass
++
++    #def testParseRemote(self):
++    #    """
++    #    Tests the parse_remote method of the OneLogin_Saml2_IdPMetadataParser
++    #    """
++    #    with self.assertRaises(Exception):
++    #        data = OneLogin_Saml2_IdPMetadataParser.parse_remote('http://google.es')
++    #
++    #    try:
++    #        data = OneLogin_Saml2_IdPMetadataParser.parse_remote('https://idp.testshib.org/idp/shibboleth')
++    #    except URLError:
++    #        xml = self.file_contents(join(self.data_path, 'metadata', 'testshib-providers.xml'))
++    #        data = OneLogin_Saml2_IdPMetadataParser.parse(xml)
++    #
++    #    self.assertTrue(data is not None and data is not {})
++    #    expected_settings_json = """
++    #    {
++    #      "sp": {
++    #        "NameIDFormat": "urn:mace:shibboleth:1.0:nameIdentifier"
++    #      },
++    #      "idp": {
++    #        "entityId": "https://idp.testshib.org/idp/shibboleth",
++    #        "x509cert": "MIIDAzCCAeugAwIBAgIVAPX0G6LuoXnKS0Muei006mVSBXbvMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNVBAMMEGlkcC50ZXN0c2hpYi5vcmcwHhcNMTYwODIzMjEyMDU0WhcNMzYwODIzMjEyMDU0WjAbMRkwFwYDVQQDDBBpZHAudGVzdHNoaWIub3JnMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg9C4J2DiRTEhJAWzPt1S3ryhm3M2P3hPpwJwvt2q948vdTUxhhvNMuc3M3S4WNh6JYBs53R+YmjqJAII4ShMGNEmlGnSVfHorex7IxikpuDPKV3SNf28mCAZbQrX+hWA+ann/uifVzqXktOjs6DdzdBnxoVhniXgC8WCJwKcx6JO/hHsH1rG/0DSDeZFpTTcZHj4S9MlLNUtt5JxRzV/MmmB3ObaX0CMqsSWUOQeE4nylSlp5RWHCnx70cs9kwz5WrflnbnzCeHU2sdbNotBEeTHot6a2cj/pXlRJIgPsrL/4VSicPZcGYMJMPoLTJ8mdy6mpR6nbCmP7dVbCIm/DQIDAQABoz4wPDAdBgNVHQ4EFgQUUfaDa2mPi24x09yWp1OFXmZ2GPswGwYDVR0RBBQwEoIQaWRwLnRlc3RzaGliLm9yZzANBgkqhkiG9w0BAQsFAAOCAQEASKKgqTxhqBzROZ1eVy++si+eTTUQZU4+8UywSKLia2RattaAPMAcXUjO+3cYOQXLVASdlJtt+8QPdRkfp8SiJemHPXC8BES83pogJPYEGJsKo19l4XFJHPnPy+Dsn3mlJyOfAa8RyWBS80u5lrvAcr2TJXt9fXgkYs7BOCigxtZoR8flceGRlAZ4p5FPPxQR6NDYb645jtOTMVr3zgfjP6Wh2dt+2p04LG7ENJn8/gEwtXVuXCsPoSCDx9Y0QmyXTJNdV1aB0AhORkWPlFYwp+zOyOIR+3m1+pqWFpn0eT/HrxpdKa74FA3R2kq4R7dXe4G0kUgXTdqXMLRKhDgdmA==",
++    #        "singleSignOnService": {
++    #          "url": "https://idp.testshib.org/idp/profile/SAML2/Redirect/SSO",
++    #          "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
++    #        }
++    #      }
++    #    }
++    #    """
++    #    expected_settings = json.loads(expected_settings_json)
++    #    self.assertEqual(expected_settings, data)
+ 
+     def testParse(self):
+         """
+@@ -122,81 +122,81 @@
+         expected_settings = json.loads(expected_settings_json)
+         self.assertEqual(expected_settings, data)
+ 
+-    def test_parse_testshib_required_binding_sso_redirect(self):
+-        """
+-        Test with testshib metadata.
+-
+-        Especially test extracting SSO with REDIRECT binding.
+-
+-        Note that the testshib metadata does not contain an SLO specification
+-        in the first <IDPSSODescriptor> tag.
+-        """
+-        expected_settings_json = """
+-        {
+-          "sp": {
+-            "NameIDFormat": "urn:mace:shibboleth:1.0:nameIdentifier"
+-          },
+-          "idp": {
+-            "entityId": "https://idp.testshib.org/idp/shibboleth",
+-            "x509cert": "MIIDAzCCAeugAwIBAgIVAPX0G6LuoXnKS0Muei006mVSBXbvMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNVBAMMEGlkcC50ZXN0c2hpYi5vcmcwHhcNMTYwODIzMjEyMDU0WhcNMzYwODIzMjEyMDU0WjAbMRkwFwYDVQQDDBBpZHAudGVzdHNoaWIub3JnMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg9C4J2DiRTEhJAWzPt1S3ryhm3M2P3hPpwJwvt2q948vdTUxhhvNMuc3M3S4WNh6JYBs53R+YmjqJAII4ShMGNEmlGnSVfHorex7IxikpuDPKV3SNf28mCAZbQrX+hWA+ann/uifVzqXktOjs6DdzdBnxoVhniXgC8WCJwKcx6JO/hHsH1rG/0DSDeZFpTTcZHj4S9MlLNUtt5JxRzV/MmmB3ObaX0CMqsSWUOQeE4nylSlp5RWHCnx70cs9kwz5WrflnbnzCeHU2sdbNotBEeTHot6a2cj/pXlRJIgPsrL/4VSicPZcGYMJMPoLTJ8mdy6mpR6nbCmP7dVbCIm/DQIDAQABoz4wPDAdBgNVHQ4EFgQUUfaDa2mPi24x09yWp1OFXmZ2GPswGwYDVR0RBBQwEoIQaWRwLnRlc3RzaGliLm9yZzANBgkqhkiG9w0BAQsFAAOCAQEASKKgqTxhqBzROZ1eVy++si+eTTUQZU4+8UywSKLia2RattaAPMAcXUjO+3cYOQXLVASdlJtt+8QPdRkfp8SiJemHPXC8BES83pogJPYEGJsKo19l4XFJHPnPy+Dsn3mlJyOfAa8RyWBS80u5lrvAcr2TJXt9fXgkYs7BOCigxtZoR8flceGRlAZ4p5FPPxQR6NDYb645jtOTMVr3zgfjP6Wh2dt+2p04LG7ENJn8/gEwtXVuXCsPoSCDx9Y0QmyXTJNdV1aB0AhORkWPlFYwp+zOyOIR+3m1+pqWFpn0eT/HrxpdKa74FA3R2kq4R7dXe4G0kUgXTdqXMLRKhDgdmA==",
+-            "singleSignOnService": {
+-              "url": "https://idp.testshib.org/idp/profile/SAML2/Redirect/SSO",
+-              "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+-            }
+-          }
+-        }
+-        """
+-        try:
+-            xmldoc = OneLogin_Saml2_IdPMetadataParser.get_metadata(
+-                'https://idp.testshib.org/idp/shibboleth')
+-        except URLError:
+-            xmldoc = self.file_contents(join(self.data_path, 'metadata', 'testshib-providers.xml'))
+-
+-        # Parse, require SSO REDIRECT binding, implicitly.
+-        settings1 = OneLogin_Saml2_IdPMetadataParser.parse(xmldoc)
+-        # Parse, require SSO REDIRECT binding, explicitly.
+-        settings2 = OneLogin_Saml2_IdPMetadataParser.parse(
+-            xmldoc,
+-            required_sso_binding=OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT
+-        )
+-        expected_settings = json.loads(expected_settings_json)
+-        self.assertEqual(expected_settings, settings1)
+-        self.assertEqual(expected_settings, settings2)
+-
+-    def test_parse_testshib_required_binding_sso_post(self):
+-        """
+-        Test with testshib metadata.
+-
+-        Especially test extracting SSO with POST binding.
+-        """
+-        expected_settings_json = """
+-        {
+-          "sp": {
+-            "NameIDFormat": "urn:mace:shibboleth:1.0:nameIdentifier"
+-          },
+-          "idp": {
+-            "entityId": "https://idp.testshib.org/idp/shibboleth",
+-            "x509cert": "MIIDAzCCAeugAwIBAgIVAPX0G6LuoXnKS0Muei006mVSBXbvMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNVBAMMEGlkcC50ZXN0c2hpYi5vcmcwHhcNMTYwODIzMjEyMDU0WhcNMzYwODIzMjEyMDU0WjAbMRkwFwYDVQQDDBBpZHAudGVzdHNoaWIub3JnMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg9C4J2DiRTEhJAWzPt1S3ryhm3M2P3hPpwJwvt2q948vdTUxhhvNMuc3M3S4WNh6JYBs53R+YmjqJAII4ShMGNEmlGnSVfHorex7IxikpuDPKV3SNf28mCAZbQrX+hWA+ann/uifVzqXktOjs6DdzdBnxoVhniXgC8WCJwKcx6JO/hHsH1rG/0DSDeZFpTTcZHj4S9MlLNUtt5JxRzV/MmmB3ObaX0CMqsSWUOQeE4nylSlp5RWHCnx70cs9kwz5WrflnbnzCeHU2sdbNotBEeTHot6a2cj/pXlRJIgPsrL/4VSicPZcGYMJMPoLTJ8mdy6mpR6nbCmP7dVbCIm/DQIDAQABoz4wPDAdBgNVHQ4EFgQUUfaDa2mPi24x09yWp1OFXmZ2GPswGwYDVR0RBBQwEoIQaWRwLnRlc3RzaGliLm9yZzANBgkqhkiG9w0BAQsFAAOCAQEASKKgqTxhqBzROZ1eVy++si+eTTUQZU4+8UywSKLia2RattaAPMAcXUjO+3cYOQXLVASdlJtt+8QPdRkfp8SiJemHPXC8BES83pogJPYEGJsKo19l4XFJHPnPy+Dsn3mlJyOfAa8RyWBS80u5lrvAcr2TJXt9fXgkYs7BOCigxtZoR8flceGRlAZ4p5FPPxQR6NDYb645jtOTMVr3zgfjP6Wh2dt+2p04LG7ENJn8/gEwtXVuXCsPoSCDx9Y0QmyXTJNdV1aB0AhORkWPlFYwp+zOyOIR+3m1+pqWFpn0eT/HrxpdKa74FA3R2kq4R7dXe4G0kUgXTdqXMLRKhDgdmA==",
+-            "singleSignOnService": {
+-              "url": "https://idp.testshib.org/idp/profile/SAML2/POST/SSO",
+-              "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+-            }
+-          }
+-        }
+-        """
+-        try:
+-            xmldoc = OneLogin_Saml2_IdPMetadataParser.get_metadata(
+-                'https://idp.testshib.org/idp/shibboleth')
+-        except URLError:
+-            xmldoc = self.file_contents(join(self.data_path, 'metadata', 'testshib-providers.xml'))
+-
+-        # Parse, require POST binding.
+-        settings = OneLogin_Saml2_IdPMetadataParser.parse(
+-            xmldoc,
+-            required_sso_binding=OneLogin_Saml2_Constants.BINDING_HTTP_POST
+-        )
+-        expected_settings = json.loads(expected_settings_json)
+-        self.assertEqual(expected_settings, settings)
++#    def test_parse_testshib_required_binding_sso_redirect(self):
++#        """
++#        Test with testshib metadata.
++#
++#        Especially test extracting SSO with REDIRECT binding.
++#
++#        Note that the testshib metadata does not contain an SLO specification
++#        in the first <IDPSSODescriptor> tag.
++#        """
++#        expected_settings_json = """
++#        {
++#          "sp": {
++#            "NameIDFormat": "urn:mace:shibboleth:1.0:nameIdentifier"
++#          },
++#          "idp": {
++#            "entityId": "https://idp.testshib.org/idp/shibboleth",
++#            "x509cert": "MIIDAzCCAeugAwIBAgIVAPX0G6LuoXnKS0Muei006mVSBXbvMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNVBAMMEGlkcC50ZXN0c2hpYi5vcmcwHhcNMTYwODIzMjEyMDU0WhcNMzYwODIzMjEyMDU0WjAbMRkwFwYDVQQDDBBpZHAudGVzdHNoaWIub3JnMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg9C4J2DiRTEhJAWzPt1S3ryhm3M2P3hPpwJwvt2q948vdTUxhhvNMuc3M3S4WNh6JYBs53R+YmjqJAII4ShMGNEmlGnSVfHorex7IxikpuDPKV3SNf28mCAZbQrX+hWA+ann/uifVzqXktOjs6DdzdBnxoVhniXgC8WCJwKcx6JO/hHsH1rG/0DSDeZFpTTcZHj4S9MlLNUtt5JxRzV/MmmB3ObaX0CMqsSWUOQeE4nylSlp5RWHCnx70cs9kwz5WrflnbnzCeHU2sdbNotBEeTHot6a2cj/pXlRJIgPsrL/4VSicPZcGYMJMPoLTJ8mdy6mpR6nbCmP7dVbCIm/DQIDAQABoz4wPDAdBgNVHQ4EFgQUUfaDa2mPi24x09yWp1OFXmZ2GPswGwYDVR0RBBQwEoIQaWRwLnRlc3RzaGliLm9yZzANBgkqhkiG9w0BAQsFAAOCAQEASKKgqTxhqBzROZ1eVy++si+eTTUQZU4+8UywSKLia2RattaAPMAcXUjO+3cYOQXLVASdlJtt+8QPdRkfp8SiJemHPXC8BES83pogJPYEGJsKo19l4XFJHPnPy+Dsn3mlJyOfAa8RyWBS80u5lrvAcr2TJXt9fXgkYs7BOCigxtZoR8flceGRlAZ4p5FPPxQR6NDYb645jtOTMVr3zgfjP6Wh2dt+2p04LG7ENJn8/gEwtXVuXCsPoSCDx9Y0QmyXTJNdV1aB0AhORkWPlFYwp+zOyOIR+3m1+pqWFpn0eT/HrxpdKa74FA3R2kq4R7dXe4G0kUgXTdqXMLRKhDgdmA==",
++#            "singleSignOnService": {
++#              "url": "https://idp.testshib.org/idp/profile/SAML2/Redirect/SSO",
++#              "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
++#            }
++#          }
++#        }
++#        """
++#        try:
++#            xmldoc = OneLogin_Saml2_IdPMetadataParser.get_metadata(
++#                'https://idp.testshib.org/idp/shibboleth')
++#        except URLError:
++#            xmldoc = self.file_contents(join(self.data_path, 'metadata', 'testshib-providers.xml'))
++#
++#        # Parse, require SSO REDIRECT binding, implicitly.
++#        settings1 = OneLogin_Saml2_IdPMetadataParser.parse(xmldoc)
++#        # Parse, require SSO REDIRECT binding, explicitly.
++#        settings2 = OneLogin_Saml2_IdPMetadataParser.parse(
++#            xmldoc,
++#            required_sso_binding=OneLogin_Saml2_Constants.BINDING_HTTP_REDIRECT
++#        )
++#        expected_settings = json.loads(expected_settings_json)
++#        self.assertEqual(expected_settings, settings1)
++#        self.assertEqual(expected_settings, settings2)
++
++#    def test_parse_testshib_required_binding_sso_post(self):
++#        """
++#        Test with testshib metadata.
++#
++#        Especially test extracting SSO with POST binding.
++#        """
++#        expected_settings_json = """
++#        {
++#          "sp": {
++#            "NameIDFormat": "urn:mace:shibboleth:1.0:nameIdentifier"
++#          },
++#          "idp": {
++#            "entityId": "https://idp.testshib.org/idp/shibboleth",
++#            "x509cert": "MIIDAzCCAeugAwIBAgIVAPX0G6LuoXnKS0Muei006mVSBXbvMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNVBAMMEGlkcC50ZXN0c2hpYi5vcmcwHhcNMTYwODIzMjEyMDU0WhcNMzYwODIzMjEyMDU0WjAbMRkwFwYDVQQDDBBpZHAudGVzdHNoaWIub3JnMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg9C4J2DiRTEhJAWzPt1S3ryhm3M2P3hPpwJwvt2q948vdTUxhhvNMuc3M3S4WNh6JYBs53R+YmjqJAII4ShMGNEmlGnSVfHorex7IxikpuDPKV3SNf28mCAZbQrX+hWA+ann/uifVzqXktOjs6DdzdBnxoVhniXgC8WCJwKcx6JO/hHsH1rG/0DSDeZFpTTcZHj4S9MlLNUtt5JxRzV/MmmB3ObaX0CMqsSWUOQeE4nylSlp5RWHCnx70cs9kwz5WrflnbnzCeHU2sdbNotBEeTHot6a2cj/pXlRJIgPsrL/4VSicPZcGYMJMPoLTJ8mdy6mpR6nbCmP7dVbCIm/DQIDAQABoz4wPDAdBgNVHQ4EFgQUUfaDa2mPi24x09yWp1OFXmZ2GPswGwYDVR0RBBQwEoIQaWRwLnRlc3RzaGliLm9yZzANBgkqhkiG9w0BAQsFAAOCAQEASKKgqTxhqBzROZ1eVy++si+eTTUQZU4+8UywSKLia2RattaAPMAcXUjO+3cYOQXLVASdlJtt+8QPdRkfp8SiJemHPXC8BES83pogJPYEGJsKo19l4XFJHPnPy+Dsn3mlJyOfAa8RyWBS80u5lrvAcr2TJXt9fXgkYs7BOCigxtZoR8flceGRlAZ4p5FPPxQR6NDYb645jtOTMVr3zgfjP6Wh2dt+2p04LG7ENJn8/gEwtXVuXCsPoSCDx9Y0QmyXTJNdV1aB0AhORkWPlFYwp+zOyOIR+3m1+pqWFpn0eT/HrxpdKa74FA3R2kq4R7dXe4G0kUgXTdqXMLRKhDgdmA==",
++#            "singleSignOnService": {
++#              "url": "https://idp.testshib.org/idp/profile/SAML2/POST/SSO",
++#              "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
++#            }
++#          }
++#        }
++#        """
++#        try:
++#            xmldoc = OneLogin_Saml2_IdPMetadataParser.get_metadata(
++#                'https://idp.testshib.org/idp/shibboleth')
++#        except URLError:
++#            xmldoc = self.file_contents(join(self.data_path, 'metadata', 'testshib-providers.xml'))
++#
++#        # Parse, require POST binding.
++#        settings = OneLogin_Saml2_IdPMetadataParser.parse(
++#            xmldoc,
++#            required_sso_binding=OneLogin_Saml2_Constants.BINDING_HTTP_POST
++#        )
++#        expected_settings = json.loads(expected_settings_json)
++#        self.assertEqual(expected_settings, settings)
+ 
+     def test_parse_required_binding_all(self):
+         """
