@@ -1,3 +1,9 @@
+python3-saml (1.10.1-1pexip2) pexip; urgency=medium
+
+  * Rebuild for main.
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Mon, 19 Jul 2021 16:07:28 +0100
+
 python3-saml (1.10.1-1pexip1) pexip; urgency=medium
 
   * Initial upload to PexOS.
