@@ -1,3 +1,9 @@
+python3-saml (1.10.1-1pexip3) pexip; urgency=medium
+
+  * Ignore more tests which need remote web access
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Tue, 27 Jul 2021 15:33:16 +0100
+
 python3-saml (1.10.1-1pexip2) pexip; urgency=medium
 
   * Rebuild for main.
