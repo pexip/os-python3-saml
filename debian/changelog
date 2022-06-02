@@ -1,3 +1,9 @@
+python3-saml (1.10.1-1pexip4) pexip; urgency=medium
+
+  * Initial bullseye build
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Thu, 02 Jun 2022 14:42:53 +0100
+
 python3-saml (1.10.1-1pexip3) pexip; urgency=medium
 
   * Ignore more tests which need remote web access
