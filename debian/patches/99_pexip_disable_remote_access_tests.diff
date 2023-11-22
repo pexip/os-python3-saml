@@ -1,0 +1,35 @@
+Index: os-python3-saml/tests/src/OneLogin/saml2_tests/idp_metadata_parser_test.py
+===================================================================
+--- os-python3-saml.orig/tests/src/OneLogin/saml2_tests/idp_metadata_parser_test.py
++++ os-python3-saml/tests/src/OneLogin/saml2_tests/idp_metadata_parser_test.py
+@@ -41,6 +41,7 @@ class OneLogin_Saml2_IdPMetadataParser_T
+         f.close()
+         return content
+ 
++    @unittest.skip('Pexip: Skip due to needing network access: naughty')
+     def testGetMetadata(self):
+         """
+         Tests the get_metadata method of the OneLogin_Saml2_IdPMetadataParser
+@@ -54,12 +55,14 @@ class OneLogin_Saml2_IdPMetadataParser_T
+         except URLError:
+             pass
+ 
++    @unittest.skip('Pexip: Skip due to needing network access: naughty')
+     def testGetMetadataWithHeaders(self):
+         data = OneLogin_Saml2_IdPMetadataParser.get_metadata('https://samltest.id/saml/providers',
+                                                              headers={'User-Agent': 'Mozilla/5.0'})
+         self.assertIsNotNone(data)
+         self.assertIn(b'entityID=', data)
+ 
++    @unittest.skip('Pexip: Skip due to needing network access: naughty')
+     def testParseRemote(self):
+         """
+         Tests the parse_remote method of the OneLogin_Saml2_IdPMetadataParser
+@@ -92,6 +95,7 @@ class OneLogin_Saml2_IdPMetadataParser_T
+         expected_settings = json.loads(expected_settings_json)
+         self.assertEqual(expected_settings, data)
+ 
++    @unittest.skip('Pexip: Skip due to needing network access: naughty')
+     def testParseRemoteWithHeaders(self):
+         """
+         Tests the parse_remote method passing headers of the OneLogin_Saml2_IdPMetadataParser
