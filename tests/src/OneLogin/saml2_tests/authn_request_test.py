@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2021 OneLogin, Inc.
-# MIT License
 
 import json
 from os.path import dirname, join, exists
@@ -52,7 +50,7 @@ class OneLogin_Saml2_Authn_Request_Test(unittest.TestCase):
 
         saml_settings = self.loadSettingsJSON()
         settings = OneLogin_Saml2_Settings(saml_settings)
-        settings._OneLogin_Saml2_Settings__organization = {
+        settings._organization = {
             u'en-US': {
                 u'url': u'http://sp.example.com',
                 u'name': u'sp_test'

@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2021 OneLogin, Inc.
-# MIT License
 
 from base64 import b64decode
+
 from lxml import etree
 from datetime import datetime
 from datetime import timedelta
@@ -14,6 +13,7 @@ import unittest
 from xml.dom.minidom import parseString
 
 from onelogin.saml2 import compat
+from onelogin.saml2.errors import OneLogin_Saml2_ValidationError
 from onelogin.saml2.response import OneLogin_Saml2_Response
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
@@ -696,11 +696,30 @@ class OneLogin_Saml2_Response_Test(unittest.TestCase):
         response_3 = OneLogin_Saml2_Response(settings, xml_3)
         self.assertEqual({}, response_3.get_attributes())
 
+        # Test retrieving duplicate attributes
+        xml_4 = self.file_contents(join(self.data_path, 'responses',
+                                        'response1_with_duplicate_attributes.xml.base64'))
+        response_4 = OneLogin_Saml2_Response(settings, xml_4)
+        with self.assertRaises(OneLogin_Saml2_ValidationError) as duplicate_name_exc:
+            response_4.get_attributes()
+        self.assertIn('Found an Attribute element with duplicated Name', str(duplicate_name_exc.exception))
+
+        settings = OneLogin_Saml2_Settings(self.loadSettingsJSON('settings11.json'))
+        expected_attributes = {'another_value': ['value'],
+                               'duplicate_name': ['name1', 'name2'],
+                               'friendly1': ['friendly1'],
+                               'friendly2': ['friendly2'],
+                               'uid': ['demo']}
+
+        response_5 = OneLogin_Saml2_Response(settings, xml_4)
+        self.assertEqual(expected_attributes, response_5.get_attributes())
+
     def testGetFriendlyAttributes(self):
         """
         Tests the get_friendlyname_attributes method of the OneLogin_Saml2_Response
         """
         settings = OneLogin_Saml2_Settings(self.loadSettingsJSON())
+
         xml = self.file_contents(join(self.data_path, 'responses', 'response1.xml.base64'))
         response = OneLogin_Saml2_Response(settings, xml)
         self.assertEqual({}, response.get_friendlyname_attributes())
@@ -719,6 +738,39 @@ class OneLogin_Saml2_Response_Test(unittest.TestCase):
         xml_4 = self.file_contents(join(self.data_path, 'responses', 'invalids', 'encrypted_attrs.xml.base64'))
         response_4 = OneLogin_Saml2_Response(settings, xml_4)
         self.assertEqual({}, response_4.get_friendlyname_attributes())
+
+        # Test retrieving duplicate attributes
+        xml_5 = self.file_contents(join(self.data_path, 'responses',
+                                        'response1_with_duplicate_attributes.xml.base64'))
+        response_5 = OneLogin_Saml2_Response(settings, xml_5)
+        with self.assertRaises(OneLogin_Saml2_ValidationError) as duplicate_name_exc:
+            response_5.get_friendlyname_attributes()
+        self.assertIn('Found an Attribute element with duplicated FriendlyName', str(duplicate_name_exc.exception))
+
+        settings = OneLogin_Saml2_Settings(self.loadSettingsJSON('settings11.json'))
+        expected_attributes = {
+            'username': ['demo'],
+            'friendlytest': ['friendly1', 'friendly2']
+        }
+
+        response_6 = OneLogin_Saml2_Response(settings, xml_5)
+        self.assertEqual(expected_attributes, response_6.get_friendlyname_attributes())
+
+    def testGetEncryptedAttributes(self):
+        """
+        Tests the get_attributes method of the OneLogin_Saml2_Response with an encrypted response
+        """
+        settings = OneLogin_Saml2_Settings(self.loadSettingsJSON('settings8.json'))
+        xml = self.file_contents(join(self.data_path, 'responses', 'signed_message_encrypted_assertion2.xml.base64'))
+        response = OneLogin_Saml2_Response(settings, xml)
+        self.assertEqual({
+            'uid': ['smartin'],
+            'mail': ['smartin@yaco.es'],
+            'cn': ['Sixto3'],
+            'sn': ['Martin2'],
+            'phone': [],
+            'eduPersonAffiliation': ['user', 'admin'],
+        }, response.get_attributes())
 
     def testGetNestedNameIDAttributes(self):
         """
@@ -739,6 +791,17 @@ class OneLogin_Saml2_Response_Test(unittest.TestCase):
             }]
         }
         self.assertEqual(expected_attributes, response.get_attributes())
+
+        expected_attributes = {
+            'another_friendly_value': [{
+                'NameID': {
+                    'Format': 'urn:oasis:names:tc:SAML:2.0:nameid-format:persistent',
+                    'NameQualifier': 'https://idpID',
+                    'value': 'value'
+                }
+            }]
+        }
+        self.assertEqual(expected_attributes, response.get_friendlyname_attributes())
 
     def testOnlyRetrieveAssertionWithIDThatMatchesSignatureReference(self):
         """
@@ -979,6 +1042,19 @@ class OneLogin_Saml2_Response_Test(unittest.TestCase):
         xml = self.file_contents(join(self.data_path, 'responses', 'invalids', 'no_key.xml.base64'))
         response = OneLogin_Saml2_Response(settings, xml)
         with self.assertRaisesRegex(Exception, 'Signature validation failed. SAML Response rejected'):
+            response.is_valid(self.get_request_data(), raise_exceptions=True)
+
+    def testIsInValidDeprecatedAlgorithm(self):
+        """
+        Tests the is_valid method of the OneLogin_Saml2_Response
+        Case Deprecated algorithm used
+        """
+        settings_dict = self.loadSettingsJSON()
+        settings_dict['security']['rejectDeprecatedAlgorithm'] = True
+        settings = OneLogin_Saml2_Settings(settings_dict)
+        xml = self.file_contents(join(self.data_path, 'responses', 'valid_response.xml.base64'))
+        response = OneLogin_Saml2_Response(settings, xml)
+        with self.assertRaisesRegex(Exception, 'Deprecated signature algorithm found: http://www.w3.org/2000/09/xmldsig#rsa-sha1'):
             response.is_valid(self.get_request_data(), raise_exceptions=True)
 
     def testIsInValidMultipleAssertions(self):
@@ -1222,7 +1298,7 @@ class OneLogin_Saml2_Response_Test(unittest.TestCase):
     def testDatetimeWithMiliseconds(self):
         """
         Tests the is_valid method of the OneLogin_Saml2_Response class
-        Somtimes IdPs uses datetimes with miliseconds, this
+        Sometimes IdPs uses datetimes with miliseconds, this
         test is to verify that the toolkit supports them
         """
         settings = OneLogin_Saml2_Settings(self.loadSettingsJSON())
@@ -1480,22 +1556,31 @@ class OneLogin_Saml2_Response_Test(unittest.TestCase):
         self.assertFalse(response_5.is_valid(request_data))
         self.assertEqual('The NameID of the Response is not encrypted and the SP require it', response_5.get_error())
 
+    def testIsInValidEncIssues_2(self):
         settings_info_2 = self.loadSettingsJSON('settings3.json')
         settings_info_2['strict'] = True
         settings_info_2['security']['wantNameIdEncrypted'] = True
         settings_2 = OneLogin_Saml2_Settings(settings_info_2)
 
         request_data = {
-            'http_host': 'pytoolkit.com',
-            'server_port': 8000,
             'script_name': '',
             'request_uri': '?acs',
         }
+        for separate_port in (False, True):
+            if separate_port:
+                request_data.update({
+                    'http_host': 'pytoolkit.com',
+                    'server_port': 8000,
+                })
+            else:
+                request_data.update({
+                    'http_host': 'pytoolkit.com:8000',
+                })
 
-        message_2 = self.file_contents(join(self.data_path, 'responses', 'valid_encrypted_assertion_encrypted_nameid.xml.base64'))
-        response_6 = OneLogin_Saml2_Response(settings_2, message_2)
-        self.assertFalse(response_6.is_valid(request_data))
-        self.assertEqual('The attributes have expired, based on the SessionNotOnOrAfter of the AttributeStatement of this Response', response_6.get_error())
+            message_2 = self.file_contents(join(self.data_path, 'responses', 'valid_encrypted_assertion_encrypted_nameid.xml.base64'))
+            response_6 = OneLogin_Saml2_Response(settings_2, message_2)
+            self.assertFalse(response_6.is_valid(request_data))
+            self.assertEqual('The attributes have expired, based on the SessionNotOnOrAfter of the AttributeStatement of this Response', response_6.get_error())
 
     def testIsInValidCert(self):
         """
@@ -1820,7 +1905,7 @@ class OneLogin_Saml2_Response_Test(unittest.TestCase):
         settings = OneLogin_Saml2_Settings(self.loadSettingsJSON())
         xml = self.file_contents(join(self.data_path, 'responses', 'signed_message_response.xml.base64'))
         response = OneLogin_Saml2_Response(settings, xml)
-        self.assertEqual(response.get_id(), 'pfxc3d2b542-0f7e-8767-8e87-5b0dc6913375')
+        self.assertEqual(response.get_id(), 'pfxf209cd60-f060-722b-02e9-4850ac5a2e41')
 
     def testGetAssertionId(self):
         """

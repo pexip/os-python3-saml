@@ -3,8 +3,6 @@ import os
 from flask import (Flask, request, render_template, redirect, session,
                    make_response)
 
-from urllib.parse import urlparse
-
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
@@ -21,11 +19,9 @@ def init_saml_auth(req):
 
 def prepare_flask_request(request):
     # If server is behind proxys or balancers use the HTTP_X_FORWARDED fields
-    url_data = urlparse(request.url)
     return {
         'https': 'on' if request.scheme == 'https' else 'off',
         'http_host': request.host,
-        'server_port': url_data.port,
         'script_name': request.path,
         'get_data': request.args.copy(),
         # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
@@ -87,6 +83,8 @@ def index():
             session['samlSessionIndex'] = auth.get_session_index()
             self_url = OneLogin_Saml2_Utils.get_self_url(req)
             if 'RelayState' in request.form and self_url != request.form['RelayState']:
+                # To avoid 'Open Redirect' attacks, before execute the redirection confirm
+                # the value of the request.form['RelayState'] is a trusted URL.
                 return redirect(auth.redirect_to(request.form['RelayState']))
         elif auth.get_settings().is_debug_active():
             error_reason = auth.get_last_error_reason()
@@ -99,6 +97,8 @@ def index():
         errors = auth.get_errors()
         if len(errors) == 0:
             if url is not None:
+                # To avoid 'Open Redirect' attacks, before execute the redirection confirm
+                # the value of the url is a trusted URL.
                 return redirect(url)
             else:
                 success_slo = True

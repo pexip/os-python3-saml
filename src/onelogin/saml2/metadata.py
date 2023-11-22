@@ -2,10 +2,8 @@
 
 """ OneLoginSaml2Metadata class
 
-Copyright (c) 2010-2021 OneLogin, Inc.
-MIT License
 
-Metadata class of OneLogin's Python Toolkit.
+Metadata class of SAML Python Toolkit.
 
 """
 
@@ -162,7 +160,7 @@ class OneLogin_Saml2_Metadata(object):
 
                 requested_attribute_data.append(requested_attribute)
 
-            str_attribute_consuming_service = """        <md:AttributeConsumingService index="1">
+            str_attribute_consuming_service = """        <md:AttributeConsumingService index="%(attribute_consuming_service_index)s">
             <md:ServiceName xml:lang="en">%(service_name)s</md:ServiceName>
 %(attr_cs_desc)s%(requested_attribute_str)s
         </md:AttributeConsumingService>
@@ -170,6 +168,7 @@ class OneLogin_Saml2_Metadata(object):
                 {
                     'service_name': sp['attributeConsumingService']['serviceName'],
                     'attr_cs_desc': attr_cs_desc_str,
+                    'attribute_consuming_service_index': sp['attributeConsumingService'].get('index', '1'),
                     'requested_attribute_str': '\n'.join(requested_attribute_data)
                 }
 
@@ -192,7 +191,7 @@ class OneLogin_Saml2_Metadata(object):
         return metadata
 
     @staticmethod
-    def sign_metadata(metadata, key, cert, sign_algorithm=OneLogin_Saml2_Constants.RSA_SHA1, digest_algorithm=OneLogin_Saml2_Constants.SHA1):
+    def sign_metadata(metadata, key, cert, sign_algorithm=OneLogin_Saml2_Constants.RSA_SHA256, digest_algorithm=OneLogin_Saml2_Constants.SHA256):
         """
         Signs the metadata with the key/cert provided
 
@@ -217,7 +216,7 @@ class OneLogin_Saml2_Metadata(object):
         return OneLogin_Saml2_Utils.add_sign(metadata, key, cert, False, sign_algorithm, digest_algorithm)
 
     @staticmethod
-    def __add_x509_key_descriptors(root, cert, signing):
+    def _add_x509_key_descriptors(root, cert, signing):
         key_descriptor = OneLogin_Saml2_XML.make_child(root, '{%s}KeyDescriptor' % OneLogin_Saml2_Constants.NS_MD)
         root.remove(key_descriptor)
         root.insert(0, key_descriptor)
@@ -260,6 +259,6 @@ class OneLogin_Saml2_Metadata(object):
             raise Exception('Malformed metadata.')
 
         if add_encryption:
-            cls.__add_x509_key_descriptors(sp_sso_descriptor, cert, False)
-        cls.__add_x509_key_descriptors(sp_sso_descriptor, cert, True)
+            cls._add_x509_key_descriptors(sp_sso_descriptor, cert, False)
+        cls._add_x509_key_descriptors(sp_sso_descriptor, cert, True)
         return OneLogin_Saml2_XML.to_string(root)

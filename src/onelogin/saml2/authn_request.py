@@ -2,10 +2,8 @@
 
 """ OneLogin_Saml2_Authn_Request class
 
-Copyright (c) 2010-2021 OneLogin, Inc.
-MIT License
 
-AuthNRequest class of OneLogin's Python Toolkit.
+AuthNRequest class of SAML Python Toolkit.
 
 """
 
@@ -41,13 +39,13 @@ class OneLogin_Saml2_Authn_Request(object):
         :param name_id_value_req: Optional argument. Indicates to the IdP the subject that should be authenticated
         :type name_id_value_req: string
         """
-        self.__settings = settings
+        self._settings = settings
 
-        sp_data = self.__settings.get_sp_data()
-        idp_data = self.__settings.get_idp_data()
-        security = self.__settings.get_security_data()
+        sp_data = self._settings.get_sp_data()
+        idp_data = self._settings.get_idp_data()
+        security = self._settings.get_security_data()
 
-        self.__id = self._generate_request_id()
+        self._id = self._generate_request_id()
         issue_instant = OneLogin_Saml2_Utils.parse_time_to_SAML(OneLogin_Saml2_Utils.now())
 
         destination = idp_data['singleSignOnService']['url']
@@ -108,11 +106,11 @@ class OneLogin_Saml2_Authn_Request(object):
 
         attr_consuming_service_str = ''
         if 'attributeConsumingService' in sp_data and sp_data['attributeConsumingService']:
-            attr_consuming_service_str = "\n    AttributeConsumingServiceIndex=\"1\""
+            attr_consuming_service_str = "\n    AttributeConsumingServiceIndex=\"%s\"" % sp_data['attributeConsumingService'].get('index', '1')
 
         request = OneLogin_Saml2_Templates.AUTHN_REQUEST % \
             {
-                'id': self.__id,
+                'id': self._id,
                 'provider_name': provider_name_str,
                 'force_authn_str': force_authn_str,
                 'is_passive_str': is_passive_str,
@@ -124,9 +122,10 @@ class OneLogin_Saml2_Authn_Request(object):
                 'nameid_policy_str': nameid_policy_str,
                 'requested_authn_context_str': requested_authn_context_str,
                 'attr_consuming_service_str': attr_consuming_service_str,
+                'acs_binding': sp_data['assertionConsumerService'].get('binding', 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST')
             }
 
-        self.__authn_request = request
+        self._authn_request = request
 
     def _generate_request_id(self):
         """
@@ -143,9 +142,9 @@ class OneLogin_Saml2_Authn_Request(object):
         :rtype: str object
         """
         if deflate:
-            request = OneLogin_Saml2_Utils.deflate_and_base64_encode(self.__authn_request)
+            request = OneLogin_Saml2_Utils.deflate_and_base64_encode(self._authn_request)
         else:
-            request = OneLogin_Saml2_Utils.b64encode(self.__authn_request)
+            request = OneLogin_Saml2_Utils.b64encode(self._authn_request)
         return request
 
     def get_id(self):
@@ -154,7 +153,7 @@ class OneLogin_Saml2_Authn_Request(object):
         :return: AuthNRequest ID
         :rtype: string
         """
-        return self.__id
+        return self._id
 
     def get_xml(self):
         """
@@ -162,4 +161,4 @@ class OneLogin_Saml2_Authn_Request(object):
         :return: XML request body
         :rtype: string
         """
-        return self.__authn_request
+        return self._authn_request

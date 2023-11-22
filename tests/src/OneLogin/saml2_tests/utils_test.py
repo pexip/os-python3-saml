@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2010-2021 OneLogin, Inc.
-# MIT License
 
 from base64 import b64decode
 import json
@@ -190,7 +188,7 @@ class OneLogin_Saml2_Utils_Test(unittest.TestCase):
         request_data = {
             'http_host': 'example.com:443'
         }
-        self.assertEqual('example.com', OneLogin_Saml2_Utils.get_self_host(request_data))
+        self.assertEqual('example.com:443', OneLogin_Saml2_Utils.get_self_host(request_data))
 
         request_data = {
             'http_host': 'example.com:ok'
@@ -210,11 +208,6 @@ class OneLogin_Saml2_Utils_Test(unittest.TestCase):
             'https': 'on'
         }
         self.assertTrue(OneLogin_Saml2_Utils.is_https(request_data))
-
-        request_data = {
-            'server_port': '80'
-        }
-        self.assertFalse(OneLogin_Saml2_Utils.is_https(request_data))
 
         request_data = {
             'server_port': '443'
@@ -797,8 +790,8 @@ class OneLogin_Saml2_Utils_Test(unittest.TestCase):
         xml_authn = b64decode(self.file_contents(join(self.data_path, 'requests', 'authn_request.xml.base64')))
         xml_authn_signed = compat.to_string(OneLogin_Saml2_Utils.add_sign(xml_authn, key, cert))
         self.assertIn('<ds:SignatureValue>', xml_authn_signed)
-        self.assertIn('<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>', xml_authn_signed)
-        self.assertIn('<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>', xml_authn_signed)
+        self.assertIn('<ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>', xml_authn_signed)
+        self.assertIn('<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>', xml_authn_signed)
 
         xml_authn_signed_2 = compat.to_string(OneLogin_Saml2_Utils.add_sign(xml_authn, key, cert, False, OneLogin_Saml2_Constants.RSA_SHA256, OneLogin_Saml2_Constants.SHA384))
         self.assertIn('<ds:SignatureValue>', xml_authn_signed_2)
