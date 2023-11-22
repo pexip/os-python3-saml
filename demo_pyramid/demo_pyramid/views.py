@@ -15,19 +15,16 @@ def init_saml_auth(req):
 
 
 def prepare_pyramid_request(request):
-    # Uncomment this portion to set the request.scheme and request.server_port
+    # Uncomment this portion to set the request.scheme
     # based on the supplied `X-Forwarded` headers.
     # Useful for running behind reverse proxies or balancers.
     #
     # if 'X-Forwarded-Proto' in request.headers:
     #    request.scheme = request.headers['X-Forwarded-Proto']
-    # if 'X-Forwarded-Port' in request.headers:
-    #    request.server_port = int(request.headers['X-Forwarded-Port'])
 
     return {
         'https': 'on' if request.scheme == 'https' else 'off',
         'http_host': request.host,
-        'server_port': request.server_port,
         'script_name': request.path,
         'get_data': request.GET.copy(),
         # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
@@ -73,6 +70,8 @@ def index(request):
             session['samlSessionIndex'] = auth.get_session_index()
             self_url = OneLogin_Saml2_Utils.get_self_url(req)
             if 'RelayState' in request.POST and self_url != request.POST['RelayState']:
+                # To avoid 'Open Redirect' attacks, before execute the redirection confirm
+                # the value of the request.POST['RelayState'] is a trusted URL.
                 return HTTPFound(auth.redirect_to(request.POST['RelayState']))
         else:
             error_reason = auth.get_last_error_reason()
@@ -82,6 +81,8 @@ def index(request):
         errors = auth.get_errors()
         if len(errors) == 0:
             if url is not None:
+                # To avoid 'Open Redirect' attacks, before execute the redirection confirm
+                # the value of the url is a trusted URL.
                 return HTTPFound(url)
             else:
                 success_slo = True

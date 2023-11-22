@@ -1,18 +1,21 @@
-# OneLogin's SAML Python Toolkit (compatible with Python3)
+# SAML Python Toolkit (compatible with Python3)
 
-[![Build Status](https://api.travis-ci.org/onelogin/python3-saml.png?branch=master)](http://travis-ci.org/onelogin/python3-saml)
-[![Coverage Status](https://coveralls.io/repos/github/onelogin/python3-saml/badge.svg?branch=master)](https://coveralls.io/github/onelogin/python3-saml?branch=master)
+[![Python package](https://github.com/SAML-Toolkits/python3-saml/actions/workflows/python-package.yml/badge.svg)](https://github.com/SAML-Toolkits/python3-saml/actions/workflows/python-package.yml)
+![PyPI Downloads](https://img.shields.io/pypi/dm/python3-saml.svg?label=PyPI%20Downloads)
+[![Coverage Status](https://coveralls.io/repos/github/SAML-Toolkits/python3-saml/badge.svg?branch=master)](https://coveralls.io/github/SAML-Toolkits/python3-saml?branch=master)
 [![PyPi Version](https://img.shields.io/pypi/v/python3-saml.svg)](https://pypi.python.org/pypi/python3-saml)
 ![Python versions](https://img.shields.io/pypi/pyversions/python3-saml.svg)
 
-
 Add SAML support to your Python software using this library.
-Forget those complicated libraries and use the open source library provided
-and supported by OneLogin Inc.
+Forget those complicated libraries and use the open source library provided by the SAML tool community.
 
-This version supports Python3. There is a separate version that only support Python2: [python-saml](https://github.com/onelogin/python-saml)
+This version supports Python3. Python 2 support was deprecated on Jan 1st, 2020: [python-saml](https://github.com/onelogin/python-saml)
 
 #### Warning ####
+
+Version 1.16.X is the latest version supporting Python2, consider its use deprecated. 1.17 won't be Python2 compatible.
+
+Version 1.13.0 sets sha256 and rsa-sha256 as default algorithms
 
 Version 1.8.0 sets strict mode active by default
 
@@ -32,7 +35,7 @@ Update ``python3-saml`` to ``>= 1.2.1``, ``1.2.0`` had a bug on signature valida
 
 #### Security Guidelines ####
 
-If you believe you have discovered a security vulnerability in this toolkit, please report it at https://www.onelogin.com/security with a description. We follow responsible disclosure guidelines, and will work with you to quickly find a resolution.
+If you believe you have discovered a security vulnerability in this toolkit, please report it by mail to the maintainer: sixto.martin.garcia+security@gmail.com
 
 Why add SAML support to my software?
 ------------------------------------
@@ -60,7 +63,7 @@ since 2002, but lately it is becoming popular due its advantages:
 General Description
 -------------------
 
-OneLogin's SAML Python toolkit lets you turn your Python application into a SP
+SAML Python toolkit lets you turn your Python application into a SP
 (Service Provider) that can be connected to an IdP (Identity Provider).
 
 **Supports:**
@@ -81,18 +84,17 @@ OneLogin's SAML Python toolkit lets you turn your Python application into a SP
  * **Easy to use** - Programmer will be allowed to code high-level and
    low-level programming, 2 easy to use APIs are available.
  * **Tested** - Thoroughly tested.
- * **Popular** - OneLogin's customers use it. Add easy support to your Django/Flask web projects.
 
 Installation
 ------------
 
 ### Dependencies ###
 
- * python 2.7 // python 3.6
+ * python 2.7 (deprecated) // python 3.6
  * [xmlsec](https://pypi.python.org/pypi/xmlsec) Python bindings for the XML Security Library.
+ * [lxml](https://pypi.python.org/pypi/lxml) Python bindings for the libxml2 and libxslt libraries.
  * [isodate](https://pypi.python.org/pypi/isodate) An ISO 8601 date/time/
  duration parser and formatter
- * [defusedxml](https://pypi.python.org/pypi/defusedxml) XML bomb protection for Python stdlib modules
 
 Review the ``setup.py`` file to know the version of the library that ``python3-saml`` is using
 
@@ -102,8 +104,8 @@ Review the ``setup.py`` file to know the version of the library that ``python3-s
 
 The toolkit is hosted on GitHub. You can download it from:
 
- * Latest release: https://github.com/onelogin/python3-saml/releases/latest
- * Master repo: https://github.com/onelogin/python3-saml/tree/master
+ * Latest release: https://github.com/saml-toolkits/python3-saml/releases/latest
+ * Master repo: https://github.com/saml-toolkits/python3-saml/tree/master
 
 Copy the core of the library ``(src/onelogin/saml2 folder)`` and merge the ``setup.py`` inside the Python application. (Each application has its structure so take your time to locate the Python SAML toolkit in the best place).
 
@@ -118,6 +120,14 @@ $ pip install python3-saml
 
 If you want to know how a project can handle python packages review this [guide](https://packaging.python.org/en/latest/tutorial.html) and review this [sampleproject](https://github.com/pypa/sampleproject)
 
+#### NOTE ####
+To avoid ``libxml2`` library version incompatibilities between ``xmlsec`` and ``lxml`` it is recommended that ``lxml`` is not installed from binary.
+
+This can be ensured by executing:
+```
+$ pip install --force-reinstall --no-binary lxml lxml
+```
+
 Security Warning
 ----------------
 
@@ -126,12 +136,41 @@ your environment is not secure and will be exposed to attacks.
 
 In production also we highly recommend to register on the settings the IdP certificate instead of using the fingerprint method. The fingerprint, is a hash, so at the end is open to a collision attack that can end on a signature validation bypass. Other SAML toolkits deprecated that mechanism, we maintain it for compatibility and also to be used on test environment.
 
+
+### Avoiding Open Redirect attacks ###
+
+Some implementations uses the RelayState parameter as a way to control the flow when SSO and SLO succeeded. So basically the
+user is redirected to the value of the RelayState.
+
+If you are using Signature Validation on the HTTP-Redirect binding, you will have the RelayState value integrity covered, otherwise, and
+on HTTP-POST binding, you can't trust the RelayState so before
+executing the validation, you need to verify that its value belong
+a trusted and expected URL.
+
+Read more about Open Redirect [CWE-601](https://cwe.mitre.org/data/definitions/601.html).
+
+### Avoiding Replay attacks ###
+
+A replay attack is basically try to reuse an intercepted valid SAML Message in order to impersonate a SAML action (SSO or SLO).
+
+SAML Messages have a limited timelife (NotBefore, NotOnOrAfter) that
+make harder this kind of attacks, but they are still possible.
+
+In order to avoid them, the SP can keep a list of SAML Messages or Assertion IDs already validated and processed. Those values only need
+to be stored the amount of time of the SAML Message life time, so
+we don't need to store all processed message/assertion Ids, but the most recent ones.
+
+The OneLogin_Saml2_Auth class contains the [get_last_request_id](https://github.com/onelogin/python3-saml/blob/ab62b0d6f3e5ac2ae8e95ce3ed2f85389252a32d/src/onelogin/saml2/auth.py#L357), [get_last_message_id](https://github.com/onelogin/python3-saml/blob/ab62b0d6f3e5ac2ae8e95ce3ed2f85389252a32d/src/onelogin/saml2/auth.py#L364) and [get_last_assertion_id](https://github.com/onelogin/python3-saml/blob/ab62b0d6f3e5ac2ae8e95ce3ed2f85389252a32d/src/onelogin/saml2/auth.py#L371) methods to retrieve the IDs
+
+Checking that the ID of the current Message/Assertion does not exists in the list of the ones already processed will prevent replay attacks.
+
+
 Getting Started
 ---------------
 
 ### Knowing the toolkit ###
 
-The new OneLogin SAML Toolkit contains different folders (``certs``, ``lib``, ``demo-django``, ``demo-flask`` and ``tests``) and some files.
+The new SAML Toolkit contains different folders (``certs``, ``lib``, ``demo-django``, ``demo-flask`` and ``tests``) and some files.
 
 Let's start describing them:
 
@@ -163,7 +202,7 @@ publish that X.509 certificate on Service Provider metadata.
 If you want to create self-signed certs, you can do it at the https://www.samltool.com/self_signed_certs.php service, or using the command:
 
 ```bash
-openssl req -new -x509 -days 3652 -nodes -out sp.crt -keyout saml.key
+openssl req -new -x509 -days 3652 -nodes -out sp.crt -keyout sp.key
 ```
 
 #### demo-flask ####
@@ -189,7 +228,12 @@ Read more at https://pythonhosted.org/an_example_pypi_project/setuptools.html
 
 Contains the unit test of the toolkit.
 
-In order to execute the test you only need to load the virtualenv with the toolkit installed on it and execute:
+In order to execute the test you only need to load the virtualenv with the toolkit installed on it properly:
+```
+pip install -e ".[test]"
+```
+
+and execute:
 ```
 python setup.py test
 ```
@@ -237,7 +281,7 @@ This is the ``settings.json`` file:
             // URL Location where the <Response> from the IdP will be returned
             "url": "https://<sp_domain>/?acs",
             // SAML protocol binding to be used when returning the <Response>
-            // message. OneLogin Toolkit supports this endpoint for the
+            // message. SAML Toolkit supports this endpoint for the
             // HTTP-POST binding only.
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
         },
@@ -249,14 +293,19 @@ This is the ``settings.json`` file:
             // OPTIONAL: only specify if different from url parameter
             //"responseUrl": "https://<sp_domain>/?sls",
             // SAML protocol binding to be used when returning the <Response>
-            // message. OneLogin Toolkit supports the HTTP-Redirect binding
+            // message. SAML Toolkit supports the HTTP-Redirect binding
             // only for this endpoint.
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
         // If you need to specify requested attributes, set a
         // attributeConsumingService. nameFormat, attributeValue and
-        // friendlyName can be ommited
+        // friendlyName can be omitted
         "attributeConsumingService": {
+                // OPTIONAL: only specify if SP requires this.
+                // index is an integer which identifies the attributeConsumingService used
+                // to the SP. SAML toolkit supports configuring only one attributeConsumingService
+                // but in certain cases the SP requires a different value.  Defaults to '1'.
+                // "index": '1',
                 "serviceName": "SP test",
                 "serviceDescription": "Test Service",
                 "requestedAttributes": [
@@ -298,7 +347,7 @@ This is the ``settings.json`` file:
             // will be sent.
             "url": "https://app.onelogin.com/trust/saml2/http-post/sso/<onelogin_connector_id>",
             // SAML protocol binding to be used when returning the <Response>
-            // message. OneLogin Toolkit supports the HTTP-Redirect binding
+            // message. SAML Toolkit supports the HTTP-Redirect binding
             // only for this endpoint.
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
@@ -307,10 +356,10 @@ This is the ``settings.json`` file:
             // URL Location where the <LogoutRequest> from the IdP will be sent (IdP-initiated logout)
             "url": "https://app.onelogin.com/trust/saml2/http-redirect/slo/<onelogin_connector_id>",
             // URL Location where the <LogoutResponse> from the IdP will sent (SP-initiated logout, reply)
-            // OPTIONAL: only specify if different from url parameter 
+            // OPTIONAL: only specify if different from url parameter
             "responseUrl": "https://app.onelogin.com/trust/saml2/http-redirect/slo_return/<onelogin_connector_id>",
             // SAML protocol binding to be used when returning the <Response>
-            // message. OneLogin Toolkit supports the HTTP-Redirect binding
+            // message. SAML Toolkit supports the HTTP-Redirect binding
             // only for this endpoint.
             "binding": "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
         },
@@ -319,8 +368,8 @@ This is the ``settings.json`` file:
         /*
          *  Instead of using the whole X.509cert you can use a fingerprint in order to
          *  validate a SAMLResponse (but you still need the X.509cert to validate LogoutRequest and LogoutResponse using the HTTP-Redirect binding).
-         *  But take in mind that the fingerprint, is a hash, so at the end is open to a collision attack that can end on a signature validation bypass,
-         *  that why we don't recommend it use for production environments.
+         *  But take in mind that the algorithm for the fingerprint should be as strong as the algorithm in a normal certificate signature
+	 *  (e.g. SHA256 or strong)
          *
          *  (openssl x509 -noout -fingerprint -in "idp.crt" to generate it,
          *  or add for example the -sha256 , -sha384 or -sha512 parameter)
@@ -447,7 +496,16 @@ In addition to the required settings data (idp, sp), extra settings can be defin
         //    'http://www.w3.org/2001/04/xmlenc#sha256'
         //    'http://www.w3.org/2001/04/xmldsig-more#sha384'
         //    'http://www.w3.org/2001/04/xmlenc#sha512'
-        'digestAlgorithm': "http://www.w3.org/2001/04/xmlenc#sha256"
+        'digestAlgorithm': "http://www.w3.org/2001/04/xmlenc#sha256",
+
+        // Specify if you want the SP to view assertions with duplicated Name or FriendlyName attributes to be valid
+        // Defaults to false if not specified
+        'allowRepeatAttributeName': false,
+
+        // If the toolkit receive a message signed with a
+        // deprecated algorithm (defined at the constant class)
+        // will raise an error and reject the message
+        "rejectDeprecatedAlgorithm": true
     },
 
     // Contact information template, it is recommended to suply a
@@ -464,7 +522,7 @@ In addition to the required settings data (idp, sp), extra settings can be defin
     },
 
     // Organization information template, the info in en_US lang is
-    // recomended, add more if required.
+    // recommended, add more if required.
     "organization": {
         "en-US": {
             "name": "sp_test",
@@ -516,10 +574,23 @@ The method above requires a little extra work to manually specify attributes abo
 
 There's an easier method -- use a metadata exchange.  Metadata is just an XML file that defines the capabilities of both the IdP and the SP application.  It also contains the X.509 public key certificates which add to the trusted relationship.  The IdP administrator can also configure custom settings for an SP based on the metadata.
 
-Using ````parse_remote```` IdP metadata can be obtained and added to the settings withouth further ado.
+Using ````parse_remote```` IdP metadata can be obtained and added to the settings without further ado.
+
+Take in mind that the OneLogin_Saml2_IdPMetadataParser class does not validate in any way the URL that is introduced in order to be parsed.
+
+Usually the same administrator that handles the Service Provider also sets the URL to the IdP, which should be a trusted resource.
+
+But there are other scenarios, like a SAAS app where the administrator of the app delegates this functionality to other users. In this case, extra precaution should be taken in order to validate such URL inputs and avoid attacks like SSRF.
+
 
 ``
 idp_data = OneLogin_Saml2_IdPMetadataParser.parse_remote('https://example.com/auth/saml2/idp/metadata')
+``
+
+You can specify a timeout in seconds for metadata retrieval, without it is not guaranteed that the request will complete
+
+``
+idp_data = OneLogin_Saml2_IdPMetadataParser.parse_remote('https://example.com/auth/saml2/idp/metadata', timeout=5)
 ``
 
 If the Metadata contains several entities, the relevant ``EntityDescriptor`` can be specified when retrieving the settings from the ``IdpMetadataParser`` by its ``entityId`` value:
@@ -552,15 +623,15 @@ This parameter has the following scheme:
 req = {
     "http_host": "",
     "script_name": "",
-    "server_port": "",
     "get_data": "",
     "post_data": "",
 
     # Advanced request options
     "https": "",
-    "lowercase_urlencoding": "",
     "request_uri": "",
-    "query_string": ""
+    "query_string": "",
+    "validate_signature_from_qs": False,
+    "lowercase_urlencoding": False
 }
 ```
 
@@ -572,7 +643,6 @@ def prepare_from_django_request(request):
     return {
         'http_host': request.META['HTTP_HOST'],
         'script_name': request.META['PATH_INFO'],
-        'server_port': request.META['SERVER_PORT'],
         'get_data': request.GET.copy(),
         'post_data': request.POST.copy()
     }
@@ -581,7 +651,6 @@ def prepare_from_flask_request(request):
     url_data = urlparse(request.url)
     return {
         'http_host': request.host,
-        'server_port': url_data.port,
         'script_name': request.path,
         'get_data': request.args.copy(),
         'post_data': request.form.copy()
@@ -592,11 +661,11 @@ An explanation of some advanced request parameters:
 
 * `https` - Defaults to ``off``. Set this to ``on`` if you receive responses over HTTPS.
 
-* `lowercase_urlencoding` - Defaults to `false`. ADFS users should set this to `true`.
-
-* `request_uri` - The path where your SAML server recieves requests. Set this if requests are not recieved at the server's root.
+* `request_uri` - The path where your SAML server receives requests. Set this if requests are not received at the server's root.
 
 * `query_string` - Set this with additional query parameters that should be passed to the request endpoint.
+
+* `validate_signature_from_qs` - If `True`, use `query_string` to validate request and response signatures. Otherwise, use `get_data`. Defaults to `False`. Note that when using `get_data`, query parameters need to be url-encoded for validation. By default we use upper-case url-encoding. Some IdPs, notably Microsoft AD, use lower-case url-encoding, which makes signature validation to fail. To fix this issue, either pass `query_string` and set `validate_signature_from_qs` to `True`, which works for all IdPs, or set `lowercase_urlencoding` to `True`, which only works for AD.
 
 
 #### Initiate SSO ####
@@ -610,7 +679,8 @@ req = prepare_request_for_toolkit(request)
 auth = OneLogin_Saml2_Auth(req)   # Constructor of the SP, loads settings.json
                                   # and advanced_settings.json
 
-auth.login()      # Method that builds and sends the AuthNRequest
+auth.login()      # This method will build and return a AuthNRequest URL that can be
+                  # either redirected to, or printed out onto the screen as a hyperlink
 ```
 
 The ``AuthNRequest`` will be sent signed or unsigned based on the security info of the ``advanced_settings.json`` file (i.e. ``authnRequestsSigned``).
@@ -623,7 +693,7 @@ We can set a ``return_to`` url parameter to the login function and that will be 
 target_url = 'https://example.com'
 auth.login(return_to=target_url)
 ```
-The login method can recieve 3 more optional parameters:
+The login method can receive 3 more optional parameters:
 
 * ``force_authn``       When ``true``, the ``AuthNReuqest`` will set the ``ForceAuthn='true'``
 * ``is_passive``        When true, the ``AuthNReuqest`` will set the ``Ispassive='true'``
@@ -678,6 +748,8 @@ if not errors:
         request.session['samlUserdata'] = auth.get_attributes()
         if 'RelayState' in req['post_data'] and
           OneLogin_Saml2_Utils.get_self_url(req) != req['post_data']['RelayState']:
+            # To avoid 'Open Redirect' attacks, before execute the redirection confirm
+                # the value of the req['post_data']['RelayState'] is a trusted URL.
             auth.redirect_to(req['post_data']['RelayState'])
         else:
             for attr_name in request.session['samlUserdata'].keys():
@@ -685,7 +757,7 @@ if not errors:
     else:
       print('Not authenticated')
 else:
-    print("Error when processing SAML Response: %s" % (', '.join(errors)))
+    print("Error when processing SAML Response: %s %s" % (', '.join(errors), auth.get_last_error_reason()))
 ```
 
 The SAML response is processed and then checked that there are no errors. It also verifies that the user is authenticated and stored the userdata in session.
@@ -716,7 +788,7 @@ If we execute print attributes we could get:
 }
 ```
 
-Each attribute name can be used as a key to obtain the value. Every attribute is a list of values. A single-valued attribute is a listy of a single element.
+Each attribute name can be used as a key to obtain the value. Every attribute is a list of values. A single-valued attribute is a list of a single element.
 
 The following code is equivalent:
 
@@ -740,11 +812,13 @@ url = auth.process_slo(delete_session_cb=delete_session_callback)
 errors = auth.get_errors()
 if len(errors) == 0:
     if url is not None:
+        # To avoid 'Open Redirect' attacks, before execute the redirection confirm
+        # the value of the url is a trusted URL.
         return redirect(url)
     else:
-        print("Sucessfully Logged out")
+        print("Successfully Logged out")
 else:
-    print("Error when processing SLO: %s" % (', '.join(errors)))
+    print("Error when processing SLO: %s %s" % (', '.join(errors), auth.get_last_error_reason()))
 ```
 
 If the SLS endpoints receives a Logout Response, the response is validated and the session could be closed, using the callback.
@@ -867,6 +941,8 @@ elif 'acs' in request.args:                 # Assertion Consumer Service
             request.session['samlSessionIndex'] = auth.get_session_index()
             self_url = OneLogin_Saml2_Utils.get_self_url(req)
             if 'RelayState' in request.form and self_url != request.form['RelayState']:
+                # To avoid 'Open Redirect' attacks, before execute the redirection confirm
+                # the value of the request.form['RelayState'] is a trusted URL.
                 return redirect(auth.redirect_to(request.form['RelayState']))   # Redirect if there is a relayState
             else:                           # If there is user data we save that to print it later.
                 msg = ''
@@ -878,9 +954,11 @@ elif 'sls' in request.args:                                             # Single
     errors = auth.get_errors()              #  Retrieves possible validation errors
     if len(errors) == 0:
         if url is not None:
+            # To avoid 'Open Redirect' attacks, before execute the redirection confirm
+            # the value of the url is a trusted URL.
             return redirect(url)
         else:
-            msg = "Sucessfully logged out"
+            msg = "Successfully logged out"
 
 if len(errors) == 0:
   print(msg)
@@ -922,7 +1000,7 @@ Described below are the main classes and methods that can be invoked from the SA
 
 #### OneLogin_Saml2_Auth - auth.py ####
 
-Main class of OneLogin Python Toolkit
+Main class of SAML Python Toolkit
 
 * `__init__` Initializes the SP SAML instance.
 * ***login*** Initiates the SSO process.
@@ -948,9 +1026,11 @@ Main class of OneLogin Python Toolkit
 * ***set_strict*** Set the strict mode active/disable.
 * ***get_last_request_xml*** Returns the most recently-constructed/processed XML SAML request (``AuthNRequest``, ``LogoutRequest``)
 * ***get_last_response_xml*** Returns the most recently-constructed/processed XML SAML response (``SAMLResponse``, ``LogoutResponse``). If the SAMLResponse had an encrypted assertion, decrypts it.
+* ***get_last_response_in_response_to*** The `InResponseTo` ID of the most recently processed SAML Response.
 * ***get_last_message_id*** The ID of the last Response SAML message processed.
 * ***get_last_assertion_id*** The ID of the last assertion processed.
 * ***get_last_assertion_not_on_or_after*** The ``NotOnOrAfter`` value of the valid ``SubjectConfirmationData`` node (if any) of the last assertion processed (is only calculated with strict = true)
+* ***get_last_assertion_issue_instant*** The `IssueInstant` value of the last assertion processed.
 
 #### OneLogin_Saml2_Auth - authn_request.py ####
 
@@ -994,7 +1074,7 @@ SAML 2 Logout Request class
 * ***get_nameid*** Gets the NameID of the Logout Request Message (returns a string).
 * ***get_issuer*** Gets the Issuer of the Logout Request Message.
 * ***get_session_indexes*** Gets the ``SessionIndexes`` from the Logout Request.
-* ***is_valid*** Checks if the Logout Request recieved is valid.
+* ***is_valid*** Checks if the Logout Request received is valid.
 * ***get_error*** After execute a validation process, if fails this method returns the cause.
 * ***get_xml*** Returns the XML that will be sent as part of the request or that was received at the SP
 
@@ -1013,7 +1093,7 @@ SAML 2 Logout Response class
 
 #### OneLogin_Saml2_Settings - settings.py ####
 
-Configuration of the OneLogin Python Toolkit
+Configuration of the SAML Python Toolkit
 
 * `__init__`  Initializes the settings: Sets the paths of the different folders and Loads settings info from settings file or array/object provided.
 * ***check_settings*** Checks the settings info.
@@ -1077,7 +1157,7 @@ Auxiliary class that contains several methods
 * ***get_expire_time*** Compares 2 dates and returns the earliest.
 * ***delete_local_session*** Deletes the local session.
 * ***calculate_X.509_fingerprint*** Calculates the fingerprint of a X.509 cert.
-* ***format_finger_print*** Formates a fingerprint.
+* ***format_finger_print*** Formats a fingerprint.
 * ***generate_name_id*** Generates a nameID.
 * ***get_status*** Gets Status from a Response.
 * ***decrypt_element*** Decrypts an encrypted element.
@@ -1127,7 +1207,7 @@ let's see how fast is it to deploy them.
 The use of a [virtualenv](http://virtualenv.readthedocs.org/en/latest/) is
 highly recommended.
 
-Virtualenv helps isolating the python enviroment used to run the toolkit. You
+Virtualenv helps isolating the python environment used to run the toolkit. You
 can find more details and an installation guide in the
 [official documentation](http://virtualenv.readthedocs.org/en/latest/).
 
@@ -1181,7 +1261,7 @@ The flask project contains:
 
 #### SP setup ####
 
-The Onelogin's Python Toolkit allows you to provide the settings info in 2 ways: Settings files or define a setting dict. In the ``demo-flask``, it uses the first method.
+The SAML Python Toolkit allows you to provide the settings info in 2 ways: Settings files or define a setting dict. In the ``demo-flask``, it uses the first method.
 
 In the ``index.py`` file we define the ``app.config['SAML_PATH']``, that will target to the ``saml`` folder. We require it in order to load the settings files.
 
@@ -1254,7 +1334,7 @@ The tornado project contains:
 
 #### SP setup ####
 
-The Onelogin's Python Toolkit allows you to provide the settings info in 2 ways: Settings files or define a setting dict. In the ``demo-tornado``, it uses the first method.
+The SAML Python Toolkit allows you to provide the settings info in 2 ways: Settings files or define a setting dict. In the ``demo-tornado``, it uses the first method.
 
 In the ``settings.py`` file we define the ``SAML_PATH``, that will target to the ``saml`` folder. We require it in order to load the settings files.
 
@@ -1327,7 +1407,7 @@ The django project contains:
 
 #### SP setup ####
 
-The Onelogin's Python Toolkit allows you to provide the settings info in 2 ways: settings files or define a setting dict. In the demo-django it used the first method.
+The SAML Python Toolkit allows you to provide the settings info in 2 ways: settings files or define a setting dict. In the demo-django it used the first method.
 
 After set the ``SAML_FOLDER`` in the ``demo/settings.py``, the settings of the Python toolkit will be loaded on the Django web.
 
@@ -1407,7 +1487,7 @@ The Pyramid project contains:
 
 #### SP setup ####
 
-The Onelogin's Python Toolkit allows you to provide the settings info in 2 ways: settings files or define a setting dict. In ``demo_pyramid`` the first method is used.
+The SAML Python Toolkit allows you to provide the settings info in 2 ways: settings files or define a setting dict. In ``demo_pyramid`` the first method is used.
 
 In the ``views.py`` file we define the ``SAML_PATH``, which will target the ``saml`` folder. We require it in order to load the settings files.
 
@@ -1431,7 +1511,7 @@ Once the SP is configured, the metadata of the SP is published at the ``/metadat
 
  4. We are logged in the app and the user attributes are showed. At this point, we can test the single log out functionality.
 
- The single log out funcionality could be tested by 2 ways.
+ The single log out functionality could be tested by 2 ways.
 
     5.1 SLO Initiated by SP. Click on the "logout" link at the SP, after that a Logout Request is sent to the IdP, the session at the IdP is closed and replies through the client to the SP with a Logout Response (sent to the Single Logout Service endpoint). The SLS endpoint /?sls of the SP process the Logout Response and if is valid, close the user session of the local app. Notice that the SLO Workflow starts and ends at the SP.
 

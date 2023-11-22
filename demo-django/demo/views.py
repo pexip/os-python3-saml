@@ -20,7 +20,6 @@ def prepare_django_request(request):
         'https': 'on' if request.is_secure() else 'off',
         'http_host': request.META['HTTP_HOST'],
         'script_name': request.META['PATH_INFO'],
-        'server_port': request.META['SERVER_PORT'],
         'get_data': request.GET.copy(),
         # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
         # 'lowercase_urlencoding': True,
@@ -85,9 +84,11 @@ def index(request):
             request.session['samlNameIdSPNameQualifier'] = auth.get_nameid_spnq()
             request.session['samlSessionIndex'] = auth.get_session_index()
             if 'RelayState' in req['post_data'] and OneLogin_Saml2_Utils.get_self_url(req) != req['post_data']['RelayState']:
+                # To avoid 'Open Redirect' attacks, before execute the redirection confirm
+                # the value of the req['post_data']['RelayState'] is a trusted URL.
                 return HttpResponseRedirect(auth.redirect_to(req['post_data']['RelayState']))
         elif auth.get_settings().is_debug_active():
-                error_reason = auth.get_last_error_reason()
+            error_reason = auth.get_last_error_reason()
     elif 'sls' in req['get_data']:
         request_id = None
         if 'LogoutRequestID' in request.session:
@@ -97,6 +98,8 @@ def index(request):
         errors = auth.get_errors()
         if len(errors) == 0:
             if url is not None:
+                # To avoid 'Open Redirect' attacks, before execute the redirection confirm
+                # the value of the url is a trusted URL
                 return HttpResponseRedirect(url)
             else:
                 success_slo = True

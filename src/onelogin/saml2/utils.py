@@ -2,14 +2,13 @@
 
 """ OneLogin_Saml2_Utils class
 
-Copyright (c) 2010-2021 OneLogin, Inc.
-MIT License
 
-Auxiliary class of OneLogin's Python Toolkit.
+Auxiliary class of SAML Python Toolkit.
 
 """
 
 import base64
+import warnings
 from copy import deepcopy
 import calendar
 from datetime import datetime
@@ -210,7 +209,7 @@ class OneLogin_Saml2_Utils(object):
             url = '%s%s' % (OneLogin_Saml2_Utils.get_self_url_host(request_data), url)
 
         # Verify that the URL is to a http or https site.
-        if re.search('^https?://', url) is None:
+        if re.search('^https?://', url, flags=re.IGNORECASE) is None:
             raise OneLogin_Saml2_Error(
                 'Redirect to invalid URL: ' + url,
                 OneLogin_Saml2_Error.REDIRECT_INVALID_URL
@@ -254,27 +253,25 @@ class OneLogin_Saml2_Utils(object):
         :rtype: string
         """
         current_host = OneLogin_Saml2_Utils.get_self_host(request_data)
-        port = ''
-        if OneLogin_Saml2_Utils.is_https(request_data):
-            protocol = 'https'
-        else:
-            protocol = 'http'
+        protocol = 'https' if OneLogin_Saml2_Utils.is_https(request_data) else 'http'
 
-        if 'server_port' in request_data and request_data['server_port'] is not None:
-            port_number = str(request_data['server_port'])
-            port = ':' + port_number
+        if request_data.get('server_port') is not None:
+            warnings.warn(
+                'The server_port key in request data is deprecated. '
+                'The http_host key should include a port, if required.',
+                category=DeprecationWarning,
+            )
+            port_suffix = ':%s' % request_data['server_port']
+            if not current_host.endswith(port_suffix):
+                if not ((protocol == 'https' and port_suffix == ':443') or (protocol == 'http' and port_suffix == ':80')):
+                    current_host += port_suffix
 
-            if protocol == 'http' and port_number == '80':
-                port = ''
-            elif protocol == 'https' and port_number == '443':
-                port = ''
-
-        return '%s://%s%s' % (protocol, current_host, port)
+        return '%s://%s' % (protocol, current_host)
 
     @staticmethod
     def get_self_host(request_data):
         """
-        Returns the current host.
+        Returns the current host (which may include a port number part).
 
         :param request_data: The request as a dict
         :type: dict
@@ -283,22 +280,11 @@ class OneLogin_Saml2_Utils(object):
         :rtype: string
         """
         if 'http_host' in request_data:
-            current_host = request_data['http_host']
+            return request_data['http_host']
         elif 'server_name' in request_data:
-            current_host = request_data['server_name']
-        else:
-            raise Exception('No hostname defined')
-
-        if ':' in current_host:
-            current_host_data = current_host.split(':')
-            possible_port = current_host_data[-1]
-            try:
-                int(possible_port)
-                current_host = current_host_data[0]
-            except ValueError:
-                current_host = ':'.join(current_host_data)
-
-        return current_host
+            warnings.warn("The server_name key in request data is undocumented & deprecated.", category=DeprecationWarning)
+            return request_data['server_name']
+        raise Exception('No hostname defined')
 
     @staticmethod
     def is_https(request_data):
@@ -312,6 +298,7 @@ class OneLogin_Saml2_Utils(object):
         :rtype: boolean
         """
         is_https = 'https' in request_data and request_data['https'] != 'off'
+        # TODO: this use of server_port should be removed too
         is_https = is_https or ('server_port' in request_data and str(request_data['server_port']) == '443')
         return is_https
 
@@ -708,7 +695,7 @@ class OneLogin_Saml2_Utils(object):
         return enc_ctx.decrypt(encrypted_data)
 
     @staticmethod
-    def add_sign(xml, key, cert, debug=False, sign_algorithm=OneLogin_Saml2_Constants.RSA_SHA1, digest_algorithm=OneLogin_Saml2_Constants.SHA1):
+    def add_sign(xml, key, cert, debug=False, sign_algorithm=OneLogin_Saml2_Constants.RSA_SHA256, digest_algorithm=OneLogin_Saml2_Constants.SHA256):
         """
         Adds signature key and senders certificate to an element (Message or
         Assertion).
@@ -746,7 +733,7 @@ class OneLogin_Saml2_Utils(object):
             OneLogin_Saml2_Constants.RSA_SHA384: xmlsec.Transform.RSA_SHA384,
             OneLogin_Saml2_Constants.RSA_SHA512: xmlsec.Transform.RSA_SHA512
         }
-        sign_algorithm_transform = sign_algorithm_transform_map.get(sign_algorithm, xmlsec.Transform.RSA_SHA1)
+        sign_algorithm_transform = sign_algorithm_transform_map.get(sign_algorithm, xmlsec.Transform.RSA_SHA256)
 
         signature = xmlsec.template.create(elem, xmlsec.Transform.EXCL_C14N, sign_algorithm_transform, ns='ds')
 
@@ -781,7 +768,7 @@ class OneLogin_Saml2_Utils(object):
             OneLogin_Saml2_Constants.SHA384: xmlsec.Transform.SHA384,
             OneLogin_Saml2_Constants.SHA512: xmlsec.Transform.SHA512
         }
-        digest_algorithm_transform = digest_algorithm_transform_map.get(digest_algorithm, xmlsec.Transform.SHA1)
+        digest_algorithm_transform = digest_algorithm_transform_map.get(digest_algorithm, xmlsec.Transform.SHA256)
 
         ref = xmlsec.template.add_reference(signature, digest_algorithm_transform, uri=elem_id)
         xmlsec.template.add_transform(ref, xmlsec.Transform.ENVELOPED)
@@ -914,7 +901,7 @@ class OneLogin_Saml2_Utils(object):
 
         if len(signature_nodes) > 0:
             for signature_node in signature_nodes:
-                # Raises expection if invalid
+                # Raises exception if invalid
                 OneLogin_Saml2_Utils.validate_node_sign(signature_node, elem, cert, fingerprint, fingerprintalg, validatecert, debug, raise_exceptions=True)
             return True
         else:
@@ -994,7 +981,7 @@ class OneLogin_Saml2_Utils(object):
         return True
 
     @staticmethod
-    def sign_binary(msg, key, algorithm=xmlsec.Transform.RSA_SHA1, debug=False):
+    def sign_binary(msg, key, algorithm=xmlsec.Transform.RSA_SHA256, debug=False):
         """
         Sign binary message
 
@@ -1020,7 +1007,7 @@ class OneLogin_Saml2_Utils(object):
         return dsig_ctx.sign_binary(compat.to_bytes(msg), algorithm)
 
     @staticmethod
-    def validate_binary_sign(signed_query, signature, cert=None, algorithm=OneLogin_Saml2_Constants.RSA_SHA1, debug=False):
+    def validate_binary_sign(signed_query, signature, cert=None, algorithm=OneLogin_Saml2_Constants.RSA_SHA256, debug=False):
         """
         Validates signed binary data (Used to validate GET Signature).
 
@@ -1052,7 +1039,7 @@ class OneLogin_Saml2_Utils(object):
                 OneLogin_Saml2_Constants.RSA_SHA384: xmlsec.Transform.RSA_SHA384,
                 OneLogin_Saml2_Constants.RSA_SHA512: xmlsec.Transform.RSA_SHA512
             }
-            sign_algorithm_transform = sign_algorithm_transform_map.get(algorithm, xmlsec.Transform.RSA_SHA1)
+            sign_algorithm_transform = sign_algorithm_transform_map.get(algorithm, xmlsec.Transform.RSA_SHA256)
 
             dsig_ctx.verify_binary(compat.to_bytes(signed_query),
                                    sign_algorithm_transform,
