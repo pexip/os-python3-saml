@@ -1,3 +1,9 @@
+python3-saml (1.16.0-1+pexip25u1) pexip-trixie; urgency=medium
+
+  * Initial trixie build
+
+ -- Mark Hymers <mark.hymers@pexip.com>  Tue, 29 Apr 2025 22:57:09 +0100
+
 python3-saml (1.16.0-1+pexip24u3) pexip-bookworm; urgency=medium
 
   * New versioning scheme
