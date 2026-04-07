@@ -1,3 +1,5 @@
+Do not run tests which require network access.
+
 Index: os-python3-saml/tests/src/OneLogin/saml2_tests/idp_metadata_parser_test.py
 ===================================================================
 --- os-python3-saml.orig/tests/src/OneLogin/saml2_tests/idp_metadata_parser_test.py
