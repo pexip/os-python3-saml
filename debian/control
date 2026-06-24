@@ -13,7 +13,7 @@ Build-Depends: debhelper-compat (= 12), dh-python,
 Standards-Version: 4.3.0
 Homepage: https://github.com/onelogin/python-saml
 Rules-Requires-Root: no
-X-Pexip-Note: This is a PexOS-specific package which is based on the upstream
+XS-Pexip-Note: This is a PexOS-specific package which is based on the upstream
  code.
 
 Package: python3-saml
